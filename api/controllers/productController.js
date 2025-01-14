@@ -1,4 +1,5 @@
 const Product = require('../schemas/productSchema');
+const StockHistory = require('../schemas/stockSchema');
 
 // Get all products with pagination
 exports.getProducts = async (req, res) => {
@@ -87,5 +88,49 @@ exports.deleteProduct = async (req, res) => {
     } catch (error) {
         console.log(error);
         res.status(500).json({ error: error.message });
+    }
+};
+
+
+// Update product stock and log history
+exports.updateProductStock = async (req, res) => {
+    const { stocks } = req.body;
+
+    if (!stocks) {
+        return res.status(400).json({ message: 'Product ID and stock amount are required' });
+    }
+
+    try {
+        stocks.forEach(async (item) => {
+            const product = await Product.findById(item.productId);
+            if (!product) {
+                return res.status(404).json({ message: 'Product not found' });
+            }
+
+            const previousStock = product.stock;
+            product.stock += item.stockToAdd;
+            await product.save();
+
+            const stockHistory = new StockHistory({
+                productId: product._id,
+                productCode: product.code,
+                productName: product.name,
+                previousStock,
+                stockAdded: item.stockToAdd,
+                currentStock: product.stock,
+            });
+
+            await stockHistory.save();
+
+            res.status(200).json({
+                message: 'Stock updated successfully',
+                product,
+                stockHistory,
+            });
+        })
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ error: error.message });
+        return
     }
 };

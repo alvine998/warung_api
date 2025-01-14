@@ -5,6 +5,7 @@ const {
     createProduct,
     updateProduct,
     deleteProduct,
+    updateProductStock,
 } = require('../controllers/productController');
 const authMiddleware = require('../middlewares/authMiddleware');
 
@@ -16,5 +17,6 @@ router.get('/:id', authMiddleware, getProductById); // Get a product by ID
 router.post('/', authMiddleware, createProduct); // Create a new product
 router.put('/:id', authMiddleware, updateProduct); // Update a product by ID
 router.delete('/:id', authMiddleware, deleteProduct); // Delete a product by ID
+router.post('/update-stock', authMiddleware, updateProductStock); // Update stock a product by ID
 
 module.exports = router;
