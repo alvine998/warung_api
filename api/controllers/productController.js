@@ -121,16 +121,48 @@ exports.updateProductStock = async (req, res) => {
             });
 
             await stockHistory.save();
-
-            res.status(200).json({
-                message: 'Stock updated successfully',
-                product,
-                stockHistory,
-            });
         })
+        res.status(200).json({
+            message: 'Stock updated successfully'
+        });
     } catch (error) {
         console.log(error);
         res.status(500).json({ error: error.message });
         return
+    }
+};
+
+exports.getProductStockHistory = async (req, res) => {
+    try {
+        // Get filter values from query parameters
+        const { productId, page = 1, limit = 10 } = req.query;
+        let filter = {};
+
+        if (productId) {
+            filter.productId = productId;
+        }
+
+        // Calculate the number of documents to skip
+        const skip = (page - 1) * limit;
+
+        // Find stockHistory with pagination
+        const stockHistory = await StockHistory.find(filter)
+            .skip(skip)
+            .limit(limit);
+
+        // Get total count of stockHistory to calculate the total number of pages
+        const totalCount = await Product.countDocuments(filter);
+
+        // Send paginated response
+        res.status(200).json({
+            stockHistory,
+            totalCount,
+            totalPages: Math.ceil(totalCount / limit),
+            currentPage: page,
+            pageSize: limit,
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ error: error.message });
     }
 };
